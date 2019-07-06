@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sam-app
+
+  Sample SAM Template for sam-app
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+# Parameters are CloudFormation features to pass input
+# to your template when you create a stack
+Parameters: 
+  Env: 
+    Type: String
+    Default: prod
+    AllowedValues: 
+      - prod
+      - staging
+    Description: Define prod/staging by Parameters
+
+  DeploymentPreference:
+    Type: String
+    Default: AllAtOnce
+    AllowedValues:
+      - Canary10Percent5Minutes
+      - Canary10Percent10Minutes
+      - Canary10Percent15Minutes
+      - Canary10Percent30Minutes
+      - Linear10PercentEvery1Minute
+      - Linear10PercentEvery2Minute
+      - Linear10PercentEvery3Minute
+      - Linear10PercentEvery10Minute
+      - AllAtOnce
+    Description: https://docs.aws.amazon.com/lambda/latest/dg/automating-updates-to-serverless-apps.html
+
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: hello_world/
+      Handler: app.lambda_handler
+      Runtime: python3.7
+      Tracing: Active  # https://docs.aws.amazon.com/lambda/latest/dg/lambda-x-ray.html
+      FunctionName:
+        'Fn::Sub': 'sam-app-HelloWorldFunction-${Env}'
+      Events:
+        HelloWorld:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /hello
+            Method: get
+      AutoPublishAlias: live
+      DeploymentPreference:
+        #Type:  Linear10PercentEvery1Minute
+        #Type:  AllAtOnce
+        Type:
+          'Fn::Sub': '${DeploymentPreference}'
+        Alarms:
+        # A list of alarms that you want to monitor
+        #   - !Ref AliasErrorMetricGreaterThanZeroAlarm
+        #   - !Ref LatestVersionErrorMetricGreaterThanZeroAlarm
+        # - !Ref APIG4XXErrorAlarm
+        # - !Ref APIG5XXErrorAlarm
+        #Hooks:
+        # Validation Lambda functions that are run before & after traffic shifting
+        #  PreTraffic: !Ref PreTrafficLambdaFunction
+        #  PostTraffic: !Ref PostTrafficLambdaFunction
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  HelloWorldApi:
+    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+  HelloWorldFunction:
+    Description: "Hello World Lambda Function ARN"
+    Value: !GetAtt HelloWorldFunction.Arn
+  HelloWorldFunctionIamRole:
+    Description: "Implicit IAM Role created for Hello World function"
+    Value: !GetAtt HelloWorldFunctionRole.Arn

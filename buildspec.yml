@@ -1,0 +1,32 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+        python: 3.7
+    commands:
+      - pip install aws-sam-cli pytest-mock
+
+  pre_build:
+    commands:
+      - echo Run unit test...
+      - echo python -m pytest -v ./tests
+
+  build:
+    commands:
+      - echo building packages, including dependencies...
+      - sam build
+      - echo built packages to target folder
+      - cp -rp .aws-sam/build/HelloWorldFunction/* hello_world/
+      - sam package --template-file template.yaml
+        --output-template-file packaged.yaml
+        --s3-bucket $S3_BUCKET
+        --region $REGION
+
+  post_build:
+    commands:
+      - echo Build completed on `date`
+
+artifacts:
+  type: zip
+  files:
+    - packaged.yaml
