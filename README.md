@@ -186,7 +186,7 @@ Choose pipeline settings -> Remain defaults
             "Effect": "Allow"
         }
 ```
-After that, test run.
+After that, test run by updating app.py then git push.
 
 You may failed in CodeBuild as the default role it created for you automatically may not contain access to S3 bucket you defined to store artifacts. If that happended, attach AmazonS3FullAccess to the Role used by CodeBuild. 
 
